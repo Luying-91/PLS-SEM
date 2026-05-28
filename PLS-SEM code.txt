@@ -1,0 +1,90 @@
+# Load plspm package and vegan package
+install.packages("plspm")
+install.packages("GGally")
+install.packages("lavaan")
+install.packages("dplyr")
+install.packages("psych")
+
+install.packages("ggplot2")
+library(plspm)
+library(ggplot2)
+library(GGally)
+library(lavaan)
+library(dplyr)
+library(psych)
+
+# Read data
+data <- read.xlsx("C:/Users/lenovo/Desktop/1. 藻类预测文章（待投稿）/数据/PLS-SEM分析数据.xlsx")
+
+# Correlation test
+cor <- corr.test(data, method = 'pearson')   # test correlation matrix
+cor$r   # view correlation coefficients
+cor$p   # view significance test results
+
+# Specify column names for latent variables
+latent_r <- list(
+  Light = c('SD', 'NTU'),
+  Physical_factors = c('Temperature', 'DO', 'Cond', 'pH'),
+  Nutrients = c('COD', 'TN', 'TP'),
+  Phytoplankton = c('Abundance', 'Chl.a')
+)
+latent_r
+
+# 0 indicates no relationship between variables, 1 indicates a relationship.
+# Relationships among latent variables, from top to bottom.
+Light            <- c(0,0,0,0)
+Physical_factors <- c(0,0,0,0)
+Nutrients        <- c(1,1,0,0)
+Phytoplankton    <- c(1,1,1,0)
+
+# install.packages("remotes")
+# remotes::install_version("plspm", version = "0.2-2")
+
+# Combine relationship data frame
+latent_path_r <- rbind(Light, Physical_factors, Nutrients, Phytoplankton)
+colnames(latent_path_r) <- rownames(latent_path_r)
+latent_path_r
+innerplot(latent_path_r)
+
+# Essentially check whether the 0/1 matrix is upper triangular or lower triangular.
+# Lower triangular -> A, upper triangular -> B. Not recommended to change; otherwise the previous code must be adjusted.
+r_A <- rep('A', 4)
+
+# Run PLS-PM
+Sample_pls <- plspm(data, latent_path_r, latent_r, modes = r_A)
+Sample_pls$crossloadings
+
+# GOF value: higher is better. Usually GOF > 0.7 is considered good, but values above 0.6 are also acceptable.
+Sample_pls$gof
+Sample_pls$boot
+
+# Path coefficient matrix
+Sample_pls$path_coefs
+
+# Direct and indirect effects among variables
+Sample_pls$effects
+
+# Latent variable scores (standardized latent variable values)
+Sample_pls$scores
+
+# Parameter estimates and significance tests for latent variables
+Sample_pls$inner_model
+
+# Output full model summary (including R²)
+summary(Sample_pls)
+
+# View causal path diagram
+innerplot(Sample_pls, colpos = 'blue', colneg = 'red', show.values = FALSE, lcol = 'black', box.lwd = 1, curve = 0)
+
+# Relationship between observed variables and latent variables
+Sample_pls$outer_model
+
+# Plot by loadings
+outerplot(Sample_pls, what = 'loadings',
+          arr.width = 0.1, colpos = 'red', colneg = 'blue',
+          show.values = TRUE, lcol = 'gray')
+
+# Plot by weights
+outerplot(Sample_pls, what = 'weights',
+          arr.width = 0.1, colpos = 'red', colneg = 'blue',
+          show.values = TRUE, lcol = 'gray')
