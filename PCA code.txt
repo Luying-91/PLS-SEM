@@ -1,0 +1,4 @@
+pca_result <- prcomp(env_scaled, center = TRUE, scale. = TRUE)
+summary(pca_result)  # variance explained
+pca_scores <- pca_result$x
+pca_loadings <- pca_result$rotation

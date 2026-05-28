@@ -1,0 +1,4 @@
+library(vegan)
+abundance_sqrt <- sqrt(abundance_matrix)   # square‑root transformation
+nmds_result <- metaMDS(abundance_sqrt, distance = "bray", k = 2, trymax = 100, autotransform = FALSE, wascores = TRUE)
+stress <- nmds_result$stress
